@@ -24,6 +24,21 @@ const state = {
   mapMarkers: [],
 };
 
+function optimizeTimelineImageUrl(url, width = 1280) {
+  try {
+    const parsed = new URL(url);
+    const isWikimediaFilePath =
+      parsed.hostname.includes("wikimedia.org") &&
+      parsed.pathname.includes("/wiki/Special:FilePath/");
+    if (isWikimediaFilePath && !parsed.searchParams.has("width")) {
+      parsed.searchParams.set("width", String(width));
+    }
+    return parsed.toString();
+  } catch (_error) {
+    return url;
+  }
+}
+
 function parseDate(dateString, endOfDay = false) {
   return new Date(`${dateString}T${endOfDay ? "23:59:59" : "12:00:00"}`);
 }
@@ -125,9 +140,10 @@ function renderTimeline() {
     .map(
       (item, index) => `
         <details
-          class="timeline-item reveal ${item.image ? "has-photo" : ""}"
+          class="timeline-item reveal"
           data-timeline-item
-          style="animation-delay:${index * 80}ms;${item.image ? `--timeline-image:url('${item.image}')` : ""}"
+          ${item.image ? `data-timeline-image="${item.image}"` : ""}
+          style="animation-delay:${index * 80}ms"
         >
           <summary>
             <div class="timeline-head">
@@ -152,6 +168,63 @@ function renderTimeline() {
       `
     )
     .join("");
+}
+
+function applyTimelineImage(card) {
+  if (!card || card.dataset.imageLoaded === "true") {
+    return;
+  }
+
+  const rawImage = card.dataset.timelineImage;
+  if (!rawImage) {
+    return;
+  }
+
+  const optimizedImage = optimizeTimelineImageUrl(rawImage);
+  const preload = new Image();
+  preload.decoding = "async";
+  preload.src = optimizedImage;
+  preload.onload = () => {
+    card.style.setProperty("--timeline-image", `url("${optimizedImage}")`);
+    card.classList.add("has-photo");
+    card.dataset.imageLoaded = "true";
+  };
+  preload.onerror = () => {
+    card.dataset.imageLoaded = "error";
+  };
+}
+
+function initTimelineImageLoading() {
+  const cards = [...document.querySelectorAll("[data-timeline-image]")];
+  if (!cards.length) {
+    return;
+  }
+
+  if (!("IntersectionObserver" in window)) {
+    cards.forEach((card) => applyTimelineImage(card));
+  } else {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            applyTimelineImage(entry.target);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "260px 0px" }
+    );
+
+    cards.forEach((card) => observer.observe(card));
+  }
+
+  document.querySelectorAll("[data-timeline-item]").forEach((item) => {
+    item.addEventListener("toggle", () => {
+      if (item.open) {
+        applyTimelineImage(item);
+      }
+    });
+  });
 }
 
 function renderSegments() {
@@ -356,6 +429,7 @@ function init() {
   renderHero();
   renderStats();
   renderTimeline();
+  initTimelineImageLoading();
   renderMapMeta();
   renderNotes();
   initCruiseMap();
