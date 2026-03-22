@@ -80,6 +80,11 @@ function createDetailBox(detail) {
     <div class="detail-box">
       <p class="detail-box__label">${detail.label}</p>
       <p class="detail-box__value">${detail.value}</p>
+      ${
+        detail.link
+          ? `<a class="detail-box__link" href="${detail.link}" target="_blank" rel="noopener noreferrer">${detail.linkLabel || "Check live status"}</a>`
+          : ""
+      }
     </div>
   `;
 }
@@ -112,10 +117,18 @@ function renderStats() {
 
 function renderTimeline() {
   const timelineList = document.getElementById("timeline-list");
-  timelineList.innerHTML = itineraryData.timeline
+  const timelineData = itineraryData.cityTimeline && itineraryData.cityTimeline.length
+    ? itineraryData.cityTimeline
+    : itineraryData.timeline;
+
+  timelineList.innerHTML = timelineData
     .map(
       (item, index) => `
-        <details class="timeline-item reveal" ${index === 0 ? "open" : ""} data-timeline-item style="animation-delay:${index * 80}ms">
+        <details
+          class="timeline-item reveal ${item.image ? "has-photo" : ""}"
+          data-timeline-item
+          style="animation-delay:${index * 80}ms;${item.image ? `--timeline-image:url('${item.image}')` : ""}"
+        >
           <summary>
             <div class="timeline-head">
               <div class="timeline-item__icon" aria-hidden="true">${ICONS[item.type]}</div>
@@ -169,39 +182,6 @@ function renderSegments() {
     .join("");
 }
 
-function renderPorts() {
-  const portsGrid = document.getElementById("ports-grid");
-  portsGrid.innerHTML = itineraryData.ports
-    .map(
-      (port, index) => `
-        <article class="port-card reveal" data-port-index="${index}" style="animation-delay:${index * 55}ms">
-          <div class="port-card__top">
-            <div class="port-card__stack">
-              <div class="port-card__icon" aria-hidden="true">${ICONS.port}</div>
-              <span class="port-stop__index">${String(index + 1).padStart(2, "0")}</span>
-            </div>
-            <div class="port-card__heading">
-              <p class="eyebrow">Port stop</p>
-              <h3>${port.title}</h3>
-              <p>${port.location}</p>
-            </div>
-          </div>
-          <div class="port-card__details">
-            <div class="detail-box">
-              <p class="detail-box__label">Date</p>
-              <p class="detail-box__value">${port.date}</p>
-            </div>
-            <div class="detail-box">
-              <p class="detail-box__label">Note</p>
-              <p class="detail-box__value">${port.note}</p>
-            </div>
-          </div>
-        </article>
-      `
-    )
-    .join("");
-}
-
 function renderMapMeta() {
   const mapMeta = document.getElementById("map-meta");
   if (!mapMeta) {
@@ -220,8 +200,8 @@ function renderMapMeta() {
     </article>
     <article class="map-note">
       <p class="eyebrow">How to use</p>
-      <h3>Tap any marker or port card</h3>
-      <p>Popups show date and stop details. Clicking a port card centers the map on that stop.</p>
+      <h3>Tap any marker</h3>
+      <p>Map popups show each date, location, and note for every port call.</p>
     </article>
   `;
 }
@@ -274,30 +254,6 @@ function initCruiseMap() {
 
   map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
   state.cruiseMap = map;
-}
-
-function bindMapPortLinks() {
-  const cards = document.querySelectorAll("[data-port-index]");
-  if (!cards.length) {
-    return;
-  }
-
-  cards.forEach((card) => {
-    card.addEventListener("click", () => {
-      if (!state.cruiseMap || !state.mapMarkers.length) {
-        return;
-      }
-      const index = Number(card.getAttribute("data-port-index"));
-      const marker = state.mapMarkers[index];
-      if (!marker) {
-        return;
-      }
-      state.cruiseMap.flyTo(marker.getLatLng(), Math.max(state.cruiseMap.getZoom(), 6), {
-        duration: 0.6,
-      });
-      marker.openPopup();
-    });
-  });
 }
 
 function renderNotes() {
@@ -400,12 +356,9 @@ function init() {
   renderHero();
   renderStats();
   renderTimeline();
-  renderSegments();
   renderMapMeta();
-  renderPorts();
   renderNotes();
   initCruiseMap();
-  bindMapPortLinks();
   bindInteractions();
   bindMenu();
 }
