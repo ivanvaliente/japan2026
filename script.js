@@ -302,7 +302,7 @@ function initCruiseMap() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
-  const routePath = points.map((point) => [point.lat, point.lng]);
+  const routePath = buildCurvedRoutePath(points);
   const routeLine = window.L.polyline(routePath, {
     color: "#1f6c7a",
     weight: 3.5,
@@ -310,8 +310,36 @@ function initCruiseMap() {
     lineJoin: "round",
   }).addTo(map);
 
+  // Slightly offset markers that share the exact same coordinates so all days remain clickable.
+  const coordGroups = new Map();
+  points.forEach((point) => {
+    const key = `${point.lat},${point.lng}`;
+    if (!coordGroups.has(key)) {
+      coordGroups.set(key, []);
+    }
+    coordGroups.get(key).push(point);
+  });
+
+  const dayPositions = new Map();
+  coordGroups.forEach((group) => {
+    if (group.length === 1) {
+      dayPositions.set(group[0].index, [group[0].lat, group[0].lng]);
+      return;
+    }
+
+    const ringMeters = 170;
+    group.forEach((point, duplicateIndex) => {
+      const angle = (Math.PI * 2 * duplicateIndex) / group.length;
+      const latOffset = (ringMeters / 111320) * Math.sin(angle);
+      const lngOffset =
+        (ringMeters / (111320 * Math.cos((point.lat * Math.PI) / 180))) * Math.cos(angle);
+      dayPositions.set(point.index, [point.lat + latOffset, point.lng + lngOffset]);
+    });
+  });
+
   state.mapMarkers = points.map((point, order) => {
-    const marker = window.L.circleMarker([point.lat, point.lng], {
+    const position = dayPositions.get(point.index) || [point.lat, point.lng];
+    const marker = window.L.circleMarker(position, {
       radius: 7,
       weight: 2,
       color: "#ffffff",
@@ -320,13 +348,68 @@ function initCruiseMap() {
     }).addTo(map);
 
     marker.bindPopup(
-      `<strong>${String(order + 1).padStart(2, "0")}. ${point.title}</strong><br>${point.date}<br>${point.location}<br>${point.note}`
+      `<strong>Day ${order + 1} - ${point.title}</strong><br>${point.date}<br>${point.location}<br>${point.note}`
     );
     return marker;
   });
 
   map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
   state.cruiseMap = map;
+}
+
+function buildCurvedRoutePath(points) {
+  if (!Array.isArray(points) || points.length < 2) {
+    return points.map((point) => [point.lat, point.lng]);
+  }
+
+  const curved = [];
+  const stepsPerLeg = 18;
+
+  points.forEach((point, index) => {
+    if (index === points.length - 1) {
+      return;
+    }
+
+    const start = points[index];
+    const end = points[index + 1];
+    const dx = end.lng - start.lng;
+    const dy = end.lat - start.lat;
+    const len = Math.hypot(dx, dy);
+
+    if (len < 0.00001) {
+      if (!curved.length) {
+        curved.push([start.lat, start.lng]);
+      }
+      return;
+    }
+
+    const midLat = (start.lat + end.lat) / 2;
+    const midLng = (start.lng + end.lng) / 2;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const direction = end.lng >= start.lng ? 1 : -1;
+    const bend = Math.min(1.15, len * 0.34) * direction;
+    const controlLat = midLat + ny * bend;
+    const controlLng = midLng + nx * bend;
+
+    for (let step = 0; step <= stepsPerLeg; step += 1) {
+      const t = step / stepsPerLeg;
+      const omt = 1 - t;
+      const lat =
+        omt * omt * start.lat + 2 * omt * t * controlLat + t * t * end.lat;
+      const lng =
+        omt * omt * start.lng + 2 * omt * t * controlLng + t * t * end.lng;
+      if (!curved.length || step > 0) {
+        curved.push([lat, lng]);
+      }
+    }
+  });
+
+  const lastPoint = points[points.length - 1];
+  if (!curved.length) {
+    curved.push([lastPoint.lat, lastPoint.lng]);
+  }
+  return curved;
 }
 
 function renderNotes() {
