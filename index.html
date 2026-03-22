@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Japan 2026 Itinerary</title>
+    <meta
+      name="description"
+      content="Interactive premium-style itinerary dashboard for a Japan 2026 trip."
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#overview">Skip to content</a>
+
+    <div class="page-shell">
+      <header class="hero" id="top">
+        <div class="hero__glow hero__glow--one" aria-hidden="true"></div>
+        <div class="hero__glow hero__glow--two" aria-hidden="true"></div>
+
+        <nav class="top-nav" aria-label="Primary">
+          <a class="brand" href="#top">Japan 2026</a>
+          <button
+            class="menu-toggle"
+            id="menu-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-menu"
+            aria-label="Open navigation menu"
+          >
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+          </button>
+          <div class="nav-links" id="primary-menu">
+            <a href="#overview">Overview</a>
+            <a href="#timeline">Timeline</a>
+            <a href="#segments">Segments</a>
+            <a href="#map">Map</a>
+            <a href="#ports">Ports</a>
+            <a href="#notes">Notes</a>
+          </div>
+        </nav>
+
+        <div class="hero__content">
+          <div class="hero__copy">
+            <p class="eyebrow">Premium trip dashboard</p>
+            <h1>Japan 2026</h1>
+            <p class="hero__subtitle">June 11 - July 2, 2026</p>
+            <p class="hero__summary" id="hero-summary"></p>
+          </div>
+
+          <aside class="progress-panel" aria-labelledby="progress-heading">
+            <div class="progress-panel__header">
+              <p class="eyebrow">Today in trip</p>
+              <h2 id="progress-heading">Trip Progress</h2>
+            </div>
+            <div class="progress-meter" aria-hidden="true">
+              <span class="progress-meter__fill" id="progress-fill"></span>
+            </div>
+            <div class="progress-panel__body" id="progress-content"></div>
+          </aside>
+        </div>
+      </header>
+
+      <nav class="sticky-nav" aria-label="Section navigation">
+        <a href="#overview">Overview</a>
+        <a href="#timeline">Timeline</a>
+        <a href="#segments">Segments</a>
+        <a href="#map">Map</a>
+        <a href="#ports">Ports</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <main id="overview">
+        <section class="section intro-grid">
+          <div class="section-heading">
+            <p class="eyebrow">Snapshot</p>
+            <h2>Quick stats</h2>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+        </section>
+
+        <section class="section timeline-section" id="timeline">
+          <div class="section-heading section-heading--row">
+            <div>
+              <p class="eyebrow">Master plan</p>
+              <h2>Interactive timeline</h2>
+            </div>
+            <button class="ghost-button" id="timeline-toggle" type="button">
+              Expand all
+            </button>
+          </div>
+          <div
+            class="timeline-list"
+            id="timeline-list"
+            role="list"
+            aria-label="Trip timeline"
+          ></div>
+        </section>
+
+        <section class="section" id="segments">
+          <div class="section-heading">
+            <p class="eyebrow">Travel segments</p>
+            <h2>Stay and transit cards</h2>
+          </div>
+          <div class="segment-grid" id="segment-grid"></div>
+        </section>
+
+        <section class="section" id="map">
+          <div class="section-heading">
+            <p class="eyebrow">Cruise map</p>
+            <h2>Route and ports</h2>
+          </div>
+          <div class="map-shell">
+            <div class="map-canvas" id="cruise-map" role="img" aria-label="Map of cruise route"></div>
+            <div class="map-meta" id="map-meta"></div>
+          </div>
+        </section>
+
+        <section class="section" id="ports">
+          <div class="section-heading">
+            <p class="eyebrow">Cruise route</p>
+            <h2>Ports of call</h2>
+          </div>
+          <div class="ports-grid" id="ports-grid"></div>
+        </section>
+
+        <section class="section" id="notes">
+          <div class="section-heading">
+            <p class="eyebrow">Planning space</p>
+            <h2>Trip notes</h2>
+          </div>
+          <div class="notes-shell">
+            <div class="notes-grid" id="notes-grid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="itinerary-data.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="script.js"></script>
+  </body>
+</html>
