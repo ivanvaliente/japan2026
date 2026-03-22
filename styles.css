@@ -87,7 +87,7 @@ a {
   position: relative;
   overflow: hidden;
   margin: 0 0 22px;
-  padding: calc(24px + var(--top-nav-height)) 24px 24px;
+  padding: 24px;
   border: 1px solid var(--line);
   border-radius: calc(var(--radius-xl) + 4px);
   background:
@@ -155,7 +155,7 @@ a {
   background: rgba(255, 251, 245, 0.88);
   backdrop-filter: blur(14px);
   box-shadow: 0 12px 28px rgba(80, 62, 39, 0.12);
-  z-index: 60;
+  z-index: 5000;
   gap: 16px;
   align-items: center;
   margin-bottom: 0;
@@ -262,6 +262,7 @@ a {
     opacity var(--transition),
     transform var(--transition),
     visibility var(--transition);
+  z-index: 5001;
 }
 
 .top-nav.is-open .nav-links {

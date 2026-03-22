@@ -261,16 +261,7 @@ function renderMapMeta() {
     return;
   }
 
-  const mappedStops = itineraryData.ports.filter(
-    (port) => Array.isArray(port.coords) && port.coords.length === 2
-  );
-
   mapMeta.innerHTML = `
-    <article class="map-note">
-      <p class="eyebrow">Mapped stops</p>
-      <h3>${mappedStops.length} plotted points</h3>
-      <p>The cruise line is drawn from the configured coordinates in the itinerary data file.</p>
-    </article>
     <article class="map-note">
       <p class="eyebrow">How to use</p>
       <h3>Tap any marker</h3>
@@ -423,7 +414,6 @@ function renderNotes() {
             <div class="note-card__heading">
               <p class="eyebrow">Notes</p>
               <h3>${group.title}</h3>
-              <p>Editable planning prompts for this part of the journey.</p>
             </div>
           </div>
           <ul class="note-list">
