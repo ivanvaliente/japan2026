@@ -124,6 +124,11 @@ function renderStats() {
           <p class="stat-card__label">${stat.label}</p>
           <p class="stat-card__value">${stat.value}</p>
           <p class="stat-card__detail">${stat.detail}</p>
+          ${
+            stat.link
+              ? `<a class="stat-card__link" href="${stat.link}" target="_blank" rel="noopener noreferrer">${stat.linkLabel || "Open link"}</a>`
+              : ""
+          }
         </article>
       `
     )
@@ -288,10 +293,7 @@ function initCruiseMap() {
     scrollWheelZoom: false,
   });
 
-  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 17,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
+  addReliableBaseLayer(map);
 
   const routePath = buildCurvedRoutePath(points);
   const routeLine = window.L.polyline(routePath, {
@@ -346,6 +348,57 @@ function initCruiseMap() {
 
   map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
   state.cruiseMap = map;
+}
+
+function addReliableBaseLayer(map) {
+  const providers = [
+    {
+      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      options: {
+        subdomains: "abcd",
+        maxZoom: 20,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      },
+    },
+    {
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      options: {
+        maxZoom: 19,
+        attribution:
+          'Tiles &copy; Esri',
+      },
+    },
+  ];
+
+  let activeLayer = null;
+  let activeProviderIndex = 0;
+
+  const activateProvider = (index) => {
+    if (activeLayer) {
+      map.removeLayer(activeLayer);
+    }
+
+    activeProviderIndex = index;
+    let tileErrors = 0;
+    activeLayer = window.L.tileLayer(providers[index].url, {
+      ...providers[index].options,
+      crossOrigin: true,
+      updateWhenIdle: true,
+      keepBuffer: 2,
+    });
+
+    activeLayer.on("tileerror", () => {
+      tileErrors += 1;
+      if (tileErrors >= 8 && activeProviderIndex < providers.length - 1) {
+        activateProvider(activeProviderIndex + 1);
+      }
+    });
+
+    activeLayer.addTo(map);
+  };
+
+  activateProvider(0);
 }
 
 function buildCurvedRoutePath(points) {
